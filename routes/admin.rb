@@ -189,7 +189,9 @@ get '/admin/config' do
                'dread'
              elsif config_options['riskmatrix']
                'riskmatrix'
-             else
+             elsif config_options["nist800"]
+               'nist800'
+              else
                'default'
              end
 
@@ -231,26 +233,37 @@ post '/admin/config' do
     config_options['cvss'] = true
     config_options['cvssv3'] = false
     config_options['riskmatrix'] = false
+    config_options['nist800'] = false
   elsif params['risk_scoring'] == 'CVSSv3'
     config_options['dread'] = false
     config_options['cvss'] = false
     config_options['cvssv3'] = true
     config_options['riskmatrix'] = false
+    config_options['nist800'] = false
   elsif params['risk_scoring'] == 'DREAD'
     config_options['dread'] = true
     config_options['cvss'] = false
     config_options['cvssv3'] = false
     config_options['riskmatrix'] = false
+    config_options['nist800'] = false
   elsif params['risk_scoring'] == 'RISKMATRIX'
     config_options['dread'] = false
     config_options['cvss'] = false
     config_options['cvssv3'] = false
     config_options['riskmatrix'] = true
+    config_options['nist800'] = false
+  elsif params['risk_scoring'] == 'NIST800-30'
+  	config_options['dread'] = false
+    config_options['cvss'] = false
+    config_options['cvssv3'] = false
+    config_options['riskmatrix'] = false
+    config_options['nist800'] = true
   else
     config_options['dread'] = false
     config_options['cvss'] = false
     config_options['cvssv3'] = false
     config_options['riskmatrix'] = false
+    config_options['nist800'] = false  
   end
 
   File.open('./config.json', 'w') do |f|
@@ -423,6 +436,10 @@ post '/admin/templates/add' do
   begin
     xslt = generate_xslt(docx)
     xslt_components = generate_xslt_components(docx)
+  rescue TemplateVerificationError => detail
+    @error_message = CGI::escapeHTML(detail.errorString)
+    @tree = CGI::escapeHTML(detail.template_tree)
+    return haml :template_error, encode_html: true
   rescue ReportingError => detail
     error = true
   end
@@ -478,11 +495,21 @@ post '/admin/templates/add' do
   end
 end
 
+get '/admin/templates/:id/tree' do
+  redirect to('/no_access') unless is_administrator?
+  @admin = true
+  xslt = Xslt.first(id: params[:id])
+  document = read_rels(xslt.docx_location,"word/document.xml")
+  @tree = verify_document(document)
+  @tree = @tree[2]
+
+  haml :template_tree, encode_html: true
+end
 # Manage Templated Reports
 get '/admin/templates/:id/edit' do
   redirect to('/no_access') unless is_administrator?
 
-  @admind = true
+  @admin = true
   @template = Xslt.first(id: params[:id])
 
   haml :edit_template, encode_html: true
@@ -568,17 +595,7 @@ end
 
 # get enabled plugins
 get '/admin/admin_plugins' do
-  @menu = []
-  Dir[File.join(File.dirname(__FILE__), '../plugins/**/', '*.json')].each do |lib|
-    pl = JSON.parse(File.open(lib).read)
-    a = {}
-    next unless pl['enabled'] && pl['admin_view']
-    # add the plugin to the menu
-    a['name'] = pl['name']
-    a['description'] = pl['description']
-    a['link'] = pl['link']
-    @menu.push(a)
-  end
+  @menu = get_plugin_list('admin')
   haml :enabled_plugins, encode_html: true
 end
 

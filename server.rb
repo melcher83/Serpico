@@ -66,7 +66,6 @@ class Server < Sinatra::Application
   set :ir, ['Not Defined', 'Low', 'Medium', 'High']
   set :ar, ['Not Defined', 'Low', 'Medium', 'High']
 
-  # CVSSv3
   set :attack_vector, %w[Local Adjacent Network Physical]
   set :attack_complexity, %w[Low High]
   set :privileges_required, %w[None Low High]
@@ -93,7 +92,11 @@ class Server < Sinatra::Application
   # Risk Matrix
   set :severity, %w[Low Medium High]
   set :likelihood, %w[Low Medium High]
-
+  
+  # NIST800
+  set :nist_likelihood, ['Low','Moderate','High']
+  set :nist_impact, ['Informational','Low','Moderate','High','Critical']
+  
   if config_options['cvssv2_scoring_override']
     if config_options['cvssv2_scoring_override'] == 'true'
       set :cvssv2_scoring_override, true
@@ -334,18 +337,18 @@ def image_insert(docx, rand_file, image, end_xml)
   docx
 end
 
-# Check if the user is an administrator
-def get_plugins
-  plugins
-end
-
-def get_plugin_list
+def get_plugin_list(type)
   menu = []
 
   Dir[File.join(File.dirname(__FILE__), 'plugins/**/', '*.json')].each do |lib|
     pl = JSON.parse(File.open(lib).read)
+    next if not pl['enabled']
     a = {}
-    next unless pl['enabled'] && pl['admin_view']
+    if type == 'user'
+       next if not pl['report_view']
+    elsif type == 'admin'
+      next if not pl['admin_view']
+    end
     # add the plugin to the menu
     a['name'] = pl['name']
     a['description'] = pl['description']
