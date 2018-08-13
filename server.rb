@@ -201,7 +201,8 @@ def auth(username, password)
       return '' if (usern == '') || (password == '')
 
       user = "#{options.domain}\\#{username}"
-      ldap = Net::LDAP.new host: options.dc.to_s, port: 389, auth: {method: :simple, username: user, password: password}
+      ldap = Net::LDAP.new host: options.dc.to_s, port: 636, encryption: :simple_tls, auth: {method: :simple, username: user, password: password}
+
 
       if ldap.bind
         # replace the session in the session table
