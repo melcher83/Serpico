@@ -209,6 +209,7 @@ def auth(username, password)
         @del_session.destroy if @del_session
         @curr_session = Sessions.create(username: usern.to_s, session_key: session[:session_id].to_s)
         @curr_session.save
+        server_log('|!| LDAP Authentication failed 1')
         return @curr_session.session_key
       else
         server_log('|!| LDAP Authentication failed')
