@@ -153,6 +153,10 @@ post '/login' do
         @curr_session.save
 
         serpico_log('Successful LDAP login')
+      else
+        server_log('|!| LDAP Authentication failed 1')
+
+
       end
     end
   end
