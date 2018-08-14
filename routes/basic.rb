@@ -154,7 +154,7 @@ post '/login' do
 
         serpico_log('Successful LDAP login')
       else
-        server_log('|!| LDAP Authentication failed 1')
+        server_log(user)
 
 
       end
