@@ -185,7 +185,7 @@ def auth(username, password)
 
   if user && (user.auth_type == 'Local')
     usern = User.authenticate(username, password)
-
+    server_log('|!| Authentication failed 1')
     if usern
       # TODO : This needs an expiration, session fixation
       @del_session = Sessions.first(username: usern.to_s)
