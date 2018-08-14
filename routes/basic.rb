@@ -156,7 +156,7 @@ post '/login' do
 
         serpico_log('Successful LDAP login')
       else
-        server_log('unsuccesful login')
+        serpico_log('unsuccesful login')
 
 
       end
