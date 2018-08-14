@@ -138,7 +138,7 @@ post '/login' do
   elsif user
     if config_options['ldap'].to_s == 'true'
       # try AD authentication
-      serpico_log('Attempting Login LDAP')
+      server_log('Attempting Login LDAP')
       #
       usern = params[:username]
       data = url_escape_hash(request.POST)
