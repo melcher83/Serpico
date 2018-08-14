@@ -147,6 +147,7 @@ post '/login' do
 
       user = "#{config_options['ldap_domain']}\\#{data['username']}"
       ldap = Net::LDAP.new host: (config_options['ldap_dc']).to_s, port: 389, auth: {method: :simple, username: user, password: params[:password], base: basen}
+      print(basen)
 
 
       if ldap.bind
