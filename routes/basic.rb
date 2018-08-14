@@ -146,8 +146,7 @@ post '/login' do
       redirect to('/') if (usern == '') || (params[:password] == '')
 
       user = "#{config_options['ldap_domain']}\\#{data['username']}"
-      ldap = Net::LDAP.new host: (config_options['ldap_dc']).to_s, port: 389, auth: {method: :simple, username: user, password: params[:password], base: basen}
-      print(basen)
+      ldap = Net::LDAP.new host: (config_options['ldap_dc']).to_s, port: 636, encryption: :simple_tls, auth: {method: :simple, username: user, password: params[:password]}
 
 
       if ldap.bind
