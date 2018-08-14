@@ -145,7 +145,7 @@ post '/login' do
       redirect to('/') if (usern == '') || (params[:password] == '')
 
       user = "#{config_options['ldap_domain']}\\#{data['username']}"
-      ldap = Net::LDAP.new host: (config_options['ldap_dc']).to_s, port: 636, encryption: :simple_tls, auth: { method: :simple, username: user, password: params[:password] }
+      ldap = Net::LDAP.new host: (config_options['ldap_dc']).to_s, port: 389, auth: {method: :simple, username: user, password: params[:password]}
 
       if ldap.bind
         # replace the session in the session table
@@ -168,6 +168,8 @@ end
 
 ## We use a persistent session table, one session per user; no end date
 get '/logout' do
+
+
   #hack to display username in log after session destroyed
   user = User.first(:username => get_username)
   if session[:session_id]
