@@ -201,6 +201,8 @@ def auth(username, password)
       return '' if (usern == '') || (password == '')
 
       user = "#{options.domain}\\#{username}"
+
+      server_log('|!| LDAP Authentication failed 1')
       ldap = Net::LDAP.new host: options.dc.to_s, port: 636, encryption: :simple_tls, auth: {method: :simple, username: user, password: password}
 
 
