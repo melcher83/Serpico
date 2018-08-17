@@ -289,7 +289,7 @@ post '/report/:id/upload_attachments' do
     datax['filename'] = upf[:filename]
     datax['description'] = CGI.escapeHTML(upf[:filename]).tr(' ', '_').tr('/', '_').tr('\\', '_').tr('`', '_')
     datax['report_id'] = id
-    datax['caption'] = params[:caption]
+    datax['appendice'] = params[:appendice]
     data = url_escape_hash(datax)
 
     @attachment = Attachments.new(data)
@@ -568,30 +568,30 @@ get '/report/:id/user_defined_variables' do
   haml :user_defined_variable, encode_html: true
 end
 
-# Post user defined variables
+# TODO: this route needs proper comments, it is very confusing
 post '/report/:id/user_defined_variables' do
   data = url_escape_hash(request.POST)
 
-  # quick fix for udv not in paragraph when on only one line
-
   data.each do |k, v|
     if k =~ /variable_data/ && (v !~ /\<paragraph\>/)
-      data[k] = "<paragraph>#{v}</paragraph>"
+      data[k.strip] = "<paragraph>#{v}</paragraph>"
     end
   end
 
   variable_hash = {}
   data.each do |k, v|
     if k =~ /variable_name/
-      key = k.split('variable_name_').last.split('_').first
+      key = k.split('variable_name_').last.split('_').first.strip
 
-      # remove certain elements from name %&"<>
       v = v.tr('%', '_').gsub('&quot;', "'").gsub('&amp;', '').gsub('&gt;', '').gsub('&lt;', '')
+
       variable_hash["#{key}%#{v}"] = 'DEFAULT'
 
     end
+
+    # TODO are the next few lines ever hit? 
     next unless k =~ /variable_data/
-    key = k.split('variable_data_').last.split('_').first
+    key = k.split('variable_data_').last.split('_').first.strip
 
     variable_hash.each do |k1, _v1|
       next unless k1 =~ /%/
@@ -600,15 +600,13 @@ post '/report/:id/user_defined_variables' do
     end
   end
 
-  # remove the % and any blank values
   q = variable_hash.clone
   variable_hash.each do |k, v|
     next unless k =~ /%/
-    p k.split('%')
     if k.split('%').size == 1
       q.delete(k)
     else
-      q[k.split('%').last] = v
+      q[k.split('%').last.strip] = v
       q.delete(k)
     end
   end
@@ -1304,8 +1302,21 @@ get '/report/:id/generate' do
       hosts_xml = hosts_xml_raw.doc.root.to_xml
     end
   end
+  # we add the xml from the attachments the user added
+  all_appendices_xml = "<appendices>\n"
+  all_appendices = Attachments.all(report_id: id, appendice: true)
+  all_appendices.each do |appendice|
+    next unless File.file?(appendice.filename_location)
+    # the filename without the extension becomes the xml tag
+    appendice_xml = "<#{appendice.filename.split('.')[0]}>"
+    appendice_xml += Nokogiri::XML(File.open(appendice.filename_location).read).root.to_xml
+    appendice_xml += "</#{appendice.filename.split('.')[0]}>"
+    all_appendices_xml += appendice_xml.to_s
+
+  end
+  all_appendices_xml += "</appendices>\n"
   # we bring all xml together
-  report_xml = "<report>#{CGI.unescapeHTML(@report.to_xml)}#{udv}#{findings_xml}#{udo_xml}#{services_xml}#{hosts_xml}</report>"
+  report_xml = "<report>#{CGI.unescapeHTML(@report.to_xml)}#{udv}#{findings_xml}#{udo_xml}#{services_xml}#{hosts_xml}#{all_appendices_xml}</report>"
   noko_report_xml = Nokogiri::XML(report_xml)
   #no use to go on with report generation if report XML is malformed
   if !noko_report_xml.errors.empty?
