@@ -1,9 +1,9 @@
 require 'sinatra/base'
 require 'webrick/https'
 require 'openssl'
-require './model/master'
-require './helpers/image.rb'
-require './helpers/helper.rb'
+require_relative './model/master'
+require_relative './helpers/image.rb'
+require_relative './helpers/helper.rb'
 require 'zip'
 require 'net/ldap'
 

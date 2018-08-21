@@ -2,7 +2,7 @@ require 'bundler/setup'
 require 'webrick/https'
 require 'openssl'
 require 'json'
-require './server.rb'
+require_relative './server.rb'
 config_options = JSON.parse(File.read('./config.json'))
 
 ## SSL Settings
